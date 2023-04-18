@@ -90,11 +90,12 @@ def list_glacier_objects(
             **kwargs,
         )
 
-        for obj in rsp["Contents"]:
-            if obj["StorageClass"] == "GLACIER":
-                key = obj["Key"]
-                keys.append(key)
-                logger.debug(key)
+        if "Contents" in rsp:
+            for obj in rsp["Contents"]:
+                if obj["StorageClass"] == "GLACIER":
+                    key = obj["Key"]
+                    keys.append(key)
+                    logger.debug(key)
 
         if "NextContinuationToken" in rsp:
             continuation_token = rsp["NextContinuationToken"]
@@ -126,7 +127,7 @@ def restore_glacier_objects(
                 },
             },
         )
-        logger.debug(f"Restoring \"{key}\" successful!")
+        logger.debug(f"Successfully sent Restore request for \"{key}\"")
 
     if continue_on_restore_already_in_progress:
         for key in keys:
