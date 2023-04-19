@@ -30,8 +30,6 @@ class Operation(Enum):
 
     """
     Check Restore status of a single object.
-    If ongoing-request == true => object is still undergoing restoration (5 - 12 hours for bulk request)
-    If ongoing-request == false and expiry-date != null => object has been restored and will expire at that date
     """
     CheckRestore = "check_restore"
 
