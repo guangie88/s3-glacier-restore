@@ -78,12 +78,12 @@ class StorageClass(Enum):
     def __str__(self):
         return self.value
 
-
-def list_glacier_objects(
+def list_objects(
         s3: boto3.Session,
         bucket: str,
-        prefix: str) -> List[str]:
-
+        prefix: str,
+        glacier: bool,
+        print: bool) -> List[str]:
     s3 = boto3.client("s3")
     keys = []
 
@@ -96,13 +96,16 @@ def list_glacier_objects(
             Prefix=prefix,
             **kwargs,
         )
-
         if "Contents" in rsp:
             for obj in rsp["Contents"]:
-                if obj["StorageClass"] == "GLACIER":
-                    key = obj["Key"]
+                key = obj["Key"]
+                if glacier == True:
+                    if obj["StorageClass"] == "GLACIER":
+                        keys.append(key)
+                        if print: logger.debug(key)
+                else:
                     keys.append(key)
-                    logger.debug(key)
+                    if print: logger.debug(key)
 
         if "NextContinuationToken" in rsp:
             continuation_token = rsp["NextContinuationToken"]
@@ -262,7 +265,7 @@ if __name__ == "__main__":
     s3 = boto3.client("s3")
 
     if args.op == Operation.List:
-        list_glacier_objects(s3, bucket, prefix)
+        list_objects(s3, bucket, prefix, glacier=True, print=True)
         logger.info("Done listing Glacier objects!")
     elif args.op == Operation.Restore:
         assert args.days and str.isdigit(args.days), "--days must be set to an integer"
@@ -273,7 +276,7 @@ if __name__ == "__main__":
         tier = args.tier
         logger.debug(f"Restore retrieval tier: {str(tier)}")
 
-        keys = list_glacier_objects(s3, bucket, prefix)
+        keys = list_objects(s3, bucket, prefix, glacier=True, print=False)
         restore_glacier_objects(s3, bucket, keys, days, tier)
         logger.info("Done listing and restoring Glacier objects!")
     elif args.op == Operation.Transit:
@@ -291,11 +294,11 @@ if __name__ == "__main__":
 
         poll_seconds = args.poll_seconds
 
-        keys = list_glacier_objects(s3, bucket, prefix)
+        keys = list_objects(s3, bucket, prefix, glacier=True, print=False)
         restore_glacier_objects(s3, bucket, keys, days, tier)
         transit_glacier_objects(s3, bucket, keys, storage_class, poll_seconds)
         logger.info("Done listing, restoring and transiting Glacier objects!")
     elif args.op == Operation.CheckRestore:
-        assert args.key
-        key = args.key
-        check_restore_status(s3, bucket, key)
+        keys = list_objects(s3, bucket, prefix, glacier=False, print=False)
+        for key in keys:
+            check_restore_status(s3, bucket, key)
