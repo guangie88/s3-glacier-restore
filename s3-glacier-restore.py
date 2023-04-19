@@ -247,9 +247,6 @@ if __name__ == "__main__":
     parser.add_argument("--poll", dest="poll_seconds", type=int, default=3600,  # Every hour
                         help="(transit) Polling interval in seconds to retry transition")
 
-    # Check status grouping
-    parser.add_argument("--key", dest="key", type=str, help="object key")
-
     args = parser.parse_args()
 
     # Set logging level first
