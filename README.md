@@ -34,6 +34,9 @@ Dockerfile and use that instead. See [here](#Dockerfile-Usage) for more details.
 ./s3-glacier-restore.py transit -b my-bucket -p my-prefix/ \
     --days 7 --tier Bulk --storage-class INTELLIGENT_TIERING 2>&1 | \
     tee transit.log
+
+# Check Restore status of all objects in bucket for a certain prefix (prefix is optional)
+./s3-glacier-restore.py check_restore -b my-bucket -p my-prefix/
 ```
 
 For more command argument details, type `./s3-glacier-restore.py --help`.
@@ -70,6 +73,9 @@ ${DOCKER_CMD} restore -b my-bucket -p my-prefix/ \
 ${DOCKER_CMD} transit -b my-bucket -p my-prefix/ \
     --days 7 --tier Bulk --storage-class INTELLIGENT_TIERING 2>&1 | \
     tee transit.log
+
+# Check Restore status of all objects in bucket for a certain prefix (prefix is optional)
+${DOCKER_CMD} check_restore -b my-bucket -p my-prefix/
 ```
 
 ## Limitations
