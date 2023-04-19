@@ -28,6 +28,13 @@ class Operation(Enum):
     """
     Transit = "transit"
 
+    """
+    Check Restore status of a single object.
+    If ongoing-request == true => object is still undergoing restoration (5 - 12 hours for bulk request)
+    If ongoing-request == false and expiry-date != null => object has been restored and will expire at that date
+    """
+    CheckRestore = "check_restore"
+
     def __str__(self):
         return self.value
 
@@ -197,6 +204,20 @@ def transit_glacier_objects(
 
         time.sleep(poll_seconds)
 
+def check_restore_status(
+        s3: boto3.Session,
+        bucket: str,
+        key: str) -> None:
+
+    s3 = boto3.client("s3")
+    rsp = s3.head_object(
+        Bucket=bucket,
+        Key=key,
+    )
+    if "Restore" in rsp:
+        status = rsp["Restore"]
+        logger.debug(f"Restore status for {key}: {status}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Restore glacier objects helper")
@@ -224,6 +245,9 @@ if __name__ == "__main__":
                         help="(transit) Storage class to transit back to")
     parser.add_argument("--poll", dest="poll_seconds", type=int, default=3600,  # Every hour
                         help="(transit) Polling interval in seconds to retry transition")
+
+    # Check status grouping
+    parser.add_argument("--key", dest="key", type=str, help="object key")
 
     args = parser.parse_args()
 
@@ -271,3 +295,7 @@ if __name__ == "__main__":
         restore_glacier_objects(s3, bucket, keys, days, tier)
         transit_glacier_objects(s3, bucket, keys, storage_class, poll_seconds)
         logger.info("Done listing, restoring and transiting Glacier objects!")
+    elif args.op == Operation.CheckRestore:
+        assert args.key
+        key = args.key
+        check_restore_status(s3, bucket, key)
