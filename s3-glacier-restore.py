@@ -97,7 +97,7 @@ def list_objects(
         if "Contents" in rsp:
             for obj in rsp["Contents"]:
                 key = obj["Key"]
-                if glacier == True:
+                if glacier:
                     if obj["StorageClass"] == "GLACIER":
                         keys.append(key)
                         if print: logger.debug(key)
